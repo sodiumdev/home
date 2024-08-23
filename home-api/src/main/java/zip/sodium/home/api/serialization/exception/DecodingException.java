@@ -1,4 +1,4 @@
-package zip.sodium.home.serialization.exception;
+package zip.sodium.home.api.serialization.exception;
 
 public final class DecodingException extends RuntimeException {
     public static DecodingException from(final Exception e) {

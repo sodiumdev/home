@@ -1,42 +1,39 @@
-package zip.sodium.home.serialization.builtin;
+package zip.sodium.home.api.serialization.builtin;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 import org.msgpack.core.MessagePack;
-import zip.sodium.home.serialization.Codec;
-import zip.sodium.home.serialization.data.Result;
-import zip.sodium.home.serialization.exception.DecodingException;
-import zip.sodium.home.serialization.exception.EncodingException;
-import zip.sodium.home.util.CompressionUtil;
+import zip.sodium.home.api.data.StoredLocation;
+import zip.sodium.home.api.serialization.Codec;
+import zip.sodium.home.api.serialization.data.Result;
+import zip.sodium.home.api.serialization.exception.DecodingException;
+import zip.sodium.home.api.serialization.exception.EncodingException;
+import zip.sodium.home.api.util.CompressionUtil;
 
 import java.io.IOException;
 import java.util.UUID;
 
-public final class LocationCodec implements Codec<Location, byte[]> {
-    public static final Codec<Location, byte[]> INSTANCE = new LocationCodec();
+public final class LocationCodec implements Codec<StoredLocation, byte[]> {
+    public static final Codec<StoredLocation, byte[]> INSTANCE = new LocationCodec();
 
     private LocationCodec() {}
 
     @Override
-    public @NotNull Result<byte[], EncodingException> encode(final @NotNull Location location) {
-        final var world = location.getWorld();
-        if (world == null)
+    public @NotNull Result<byte[], EncodingException> encode(final @NotNull StoredLocation storedLocation) {
+        final var worldUuid = storedLocation.worldId();
+        if (worldUuid == null)
             return Result.err(
                     EncodingException.from("World is null")
             );
-
-        final var worldUuid = world.getUID();
 
         final byte[] data;
         try (final var packer = MessagePack.newDefaultBufferPacker()) {
             packer.packLong(worldUuid.getMostSignificantBits());
             packer.packLong(worldUuid.getLeastSignificantBits());
-            packer.packDouble(location.getX());
-            packer.packDouble(location.getY());
-            packer.packDouble(location.getZ());
-            packer.packFloat(location.getYaw());
-            packer.packFloat(location.getPitch());
+            packer.packDouble(storedLocation.x());
+            packer.packDouble(storedLocation.y());
+            packer.packDouble(storedLocation.z());
+            packer.packFloat(storedLocation.yaw());
+            packer.packFloat(storedLocation.pitch());
 
             data = packer.toByteArray();
         } catch (final IOException e) {
@@ -55,28 +52,20 @@ public final class LocationCodec implements Codec<Location, byte[]> {
     }
 
     @Override
-    public @NotNull Result<Location, DecodingException> decode(byte @NotNull [] data) {
+    public @NotNull Result<StoredLocation, DecodingException> decode(final byte @NotNull [] data) {
+        final byte[] decompressedData;
         try {
-            data = CompressionUtil.decompress(data);
+            decompressedData = CompressionUtil.decompress(data);
         } catch (final IOException e) {
             return Result.err(
                     DecodingException.from(e)
             );
         }
 
-        try (final var unpacker = MessagePack.newDefaultUnpacker(data)) {
-            final var world = Bukkit.getWorld(
-                    new UUID(unpacker.unpackLong(), unpacker.unpackLong())
-            );
-
-            if (world == null)
-                return Result.err(
-                        DecodingException.from("World is null")
-                );
-
+        try (final var unpacker = MessagePack.newDefaultUnpacker(decompressedData)) {
             return Result.ok(
-                    new Location(
-                            world,
+                    new StoredLocation(
+                            new UUID(unpacker.unpackLong(), unpacker.unpackLong()),
                             unpacker.unpackDouble(),
                             unpacker.unpackDouble(),
                             unpacker.unpackDouble(),

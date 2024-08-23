@@ -1,20 +1,36 @@
 package zip.sodium.home.command.builtin;
 
 import com.google.common.base.Preconditions;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import zip.sodium.home.Entrypoint;
+import zip.sodium.home.api.data.StoredLocation;
 import zip.sodium.home.config.builtin.MessageConfig;
 import zip.sodium.home.config.builtin.PermissionConfig;
-import zip.sodium.home.database.DatabaseHolder;
 
 import java.util.List;
 
 public final class SetHomeCommand extends Command {
     public static final Command INSTANCE = new SetHomeCommand();
     public static final String NAME = "sethome";
+
+    private static StoredLocation convertLocation(final Location location) {
+        Preconditions.checkArgument(location != null, "Location is null");
+        Preconditions.checkArgument(location.getWorld() != null, "Location world is null");
+
+        return new StoredLocation(
+                location.getWorld().getUID(),
+                location.getX(),
+                location.getY(),
+                location.getZ(),
+                location.getYaw(),
+                location.getPitch()
+        );
+    }
 
     private SetHomeCommand() {
         super(NAME);
@@ -40,11 +56,12 @@ public final class SetHomeCommand extends Command {
             }
 
             final String name = args[0];
-            DatabaseHolder.setHome(
-                    player.getServer().getOfflinePlayer(name),
-                    location
+            Entrypoint.api().setHome(
+                    player.getServer().getOfflinePlayer(name)
+                            .getUniqueId(),
+                    convertLocation(location)
             ).thenAccept(success -> {
-                if (success) {
+                if (success.isOk()) {
                     MessageConfig.SUCCESSFULLY_SET_HOME.send(player);
                 } else {
                     MessageConfig.COULDNT_SET_HOME.send(player);
@@ -61,11 +78,11 @@ public final class SetHomeCommand extends Command {
             return false;
         }
 
-        DatabaseHolder.setHome(
-                player,
-                location
-        ).thenAccept(success -> {
-            if (success) {
+        Entrypoint.api().setHome(
+                player.getUniqueId(),
+                convertLocation(location)
+        ).thenAccept(result -> {
+            if (result.isOk()) {
                 MessageConfig.SUCCESSFULLY_SET_HOME.send(player);
             } else {
                 MessageConfig.COULDNT_SET_HOME.send(player);

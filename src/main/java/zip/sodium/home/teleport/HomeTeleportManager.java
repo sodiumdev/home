@@ -6,8 +6,9 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
+import zip.sodium.home.Entrypoint;
 import zip.sodium.home.config.builtin.MessageConfig;
-import zip.sodium.home.database.DatabaseHolder;
+import zip.sodium.home.api.HomeApi;
 import zip.sodium.home.teleport.task.TeleportPlayerTask;
 
 import java.util.concurrent.CompletableFuture;
@@ -22,8 +23,9 @@ public final class HomeTeleportManager {
         Preconditions.checkArgument(player != null, "Player is null");
         Preconditions.checkArgument(into != null, "Into is null");
 
-        return DatabaseHolder.getHome(into).thenAccept(location -> {
-            if (location == null) {
+        return Entrypoint.api().getHome(into.getUniqueId()).thenAccept(location -> {
+            final var unwrapped = location.unwrap();
+            if (unwrapped == null) {
                 MessageConfig.NO_HOME.send(
                         player,
                         Placeholder.unparsed("player", into.getName())
@@ -35,7 +37,7 @@ public final class HomeTeleportManager {
             TeleportPlayerTask.start(
                     plugin,
                     player,
-                    location
+                    unwrapped
             );
         });
     }

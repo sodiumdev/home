@@ -1,4 +1,4 @@
-package zip.sodium.home.util;
+package zip.sodium.home.api.util;
 
 import com.github.luben.zstd.Zstd;
 import com.github.luben.zstd.ZstdCompressCtx;

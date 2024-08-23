@@ -8,17 +8,18 @@ version = '1.0-SNAPSHOT'
 repositories {
     mavenCentral()
     maven {
-        name = "spigotmc-repo"
-        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
-    }
-    maven {
         name = "sonatype"
         url = "https://oss.sonatype.org/content/groups/public/"
     }
 }
 
 dependencies {
-    compileOnly "org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT"
+    implementation "org.mongodb:mongodb-driver-sync:5.1.2"
+
+    implementation "org.msgpack:msgpack-core:0.9.8"
+    implementation "com.github.luben:zstd-jni:1.5.6-3"
 
     implementation "org.jetbrains:annotations:24.0.0"
+
+    implementation "com.google.guava:guava:33.3.0-jre"
 }

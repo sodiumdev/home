@@ -1,4 +1,4 @@
-package zip.sodium.home.serialization.exception;
+package zip.sodium.home.api.serialization.exception;
 
 public final class EncodingException extends RuntimeException {
     public static EncodingException from(final Exception e) {

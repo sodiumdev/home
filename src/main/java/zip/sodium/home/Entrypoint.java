@@ -2,19 +2,22 @@ package zip.sodium.home;
 
 import com.google.common.base.Preconditions;
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
-import zip.sodium.home.api.HomeApi;
-import zip.sodium.home.api.HomeApiImpl;
 import zip.sodium.home.command.CommandHandler;
 import zip.sodium.home.config.ConfigHandler;
-import zip.sodium.home.database.DatabaseHolder;
+import zip.sodium.home.api.HomeApi;
+import zip.sodium.home.config.builtin.DatabaseConfig;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class Entrypoint extends JavaPlugin {
     private static Entrypoint instance = null;
+    private static HomeApi api = null;
+
+    public static HomeApi api() {
+        return Preconditions.checkNotNull(api, "API not initialized");
+    }
 
     public static Entrypoint instance() {
         return Preconditions.checkNotNull(instance, "Plugin not initialized");
@@ -53,13 +56,11 @@ public final class Entrypoint extends JavaPlugin {
         instance = this;
 
         ConfigHandler.acknowledge(this);
-        DatabaseHolder.acknowledge();
 
-        getServer().getServicesManager().register(
-                HomeApi.class,
-                HomeApiImpl.INSTANCE,
-                this,
-                ServicePriority.Normal
+        api = HomeApi.create(
+                DatabaseConfig.CONNECTION_STRING.get(),
+                DatabaseConfig.DATABASE_NAME.get(),
+                DatabaseConfig.DATA_COLLECTION_NAME.get()
         );
 
         CommandHandler.acknowledge();
@@ -67,6 +68,9 @@ public final class Entrypoint extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        DatabaseHolder.cleanup();
+        if (api != null) {
+            api.cleanup();
+            api = null;
+        }
     }
 }

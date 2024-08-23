@@ -6,9 +6,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import zip.sodium.home.Entrypoint;
 import zip.sodium.home.config.builtin.MessageConfig;
 import zip.sodium.home.config.builtin.PermissionConfig;
-import zip.sodium.home.database.DatabaseHolder;
 
 import java.util.List;
 
@@ -32,11 +32,12 @@ public final class DelHomeCommand extends Command {
 
         if (PermissionConfig.USE_DELHOME_OTHERS.has(player) && args.length >= 1) {
             final String name = args[0];
-            DatabaseHolder.setHome(
-                    player.getServer().getOfflinePlayer(name),
+            Entrypoint.api().setHome(
+                    player.getServer().getOfflinePlayer(name)
+                            .getUniqueId(),
                     null
-            ).thenAccept(success -> {
-                if (success) {
+            ).thenAccept(result -> {
+                if (result.isOk()) {
                     MessageConfig.SUCCESSFULLY_DELETED_HOME.send(player);
                 } else {
                     MessageConfig.COULDNT_DELETE_HOME.send(player);
@@ -52,11 +53,11 @@ public final class DelHomeCommand extends Command {
             return false;
         }
 
-        DatabaseHolder.setHome(
-                player,
+        Entrypoint.api().setHome(
+                player.getUniqueId(),
                 null
         ).thenAccept(success -> {
-            if (success) {
+            if (success.isOk()) {
                 MessageConfig.SUCCESSFULLY_DELETED_HOME.send(player);
             } else {
                 MessageConfig.COULDNT_DELETE_HOME.send(player);
